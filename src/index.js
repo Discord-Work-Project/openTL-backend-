@@ -29,6 +29,11 @@ const channelUsers = {}; // { channelId: [ { socketId, userId, username, avatar,
 const typingUsers = {}; // { channelId: { userId: timeout } }
 const globalUsers = new Set(); // Track all connected users by socketId
 
+
+app.get("/", (req, res) => {
+  res.status(200).send("🚀 Backend is running successfully");
+});
+
 io.on("connection", (socket) => {
     console.log("Joined:", socket.id);
     
