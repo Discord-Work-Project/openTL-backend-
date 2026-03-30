@@ -10,6 +10,7 @@ const serverRoutes = require("./routes/serverRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
+const inviteRoutes = require("./routes/inviteRoutes");
 
 const http = require("http");
 const { Server } = require("socket.io");
@@ -83,6 +84,17 @@ io.on("connection", (socket) => {
             channelUsers[channelId] = channelUsers[channelId].filter(u => u.socketId !== socket.id);
             io.to(channelId).emit("channel-users-updated", channelUsers[channelId]);
         }
+    });
+
+    socket.on("send-message", (message) => {
+        // Broadcast to everyone else in the channel
+        socket.to(message.channelId).emit("new-message", message);
+    });
+
+    socket.on("delete-message", (data) => {
+        const { messageId, channelId } = data;
+        // Broadcast deletion event
+        socket.to(channelId).emit("message-deleted", messageId);
     });
 
     socket.on("typing-start", (data) => {
@@ -256,6 +268,7 @@ app.use("/api/servers", serverRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/meetings", meetingRoutes);
+app.use("/api/invite", inviteRoutes);
 
 // Get active user count
 app.get("/api/users/active", (req, res) => {

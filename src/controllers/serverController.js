@@ -56,7 +56,7 @@ const getServerDetails = async (req, res) => {
         }
 
         // Check if user is a member
-        if (!server.members.includes(req.user._id)) {
+        if (!server.members.some(m => m.toString() === req.user._id.toString())) {
             return res.status(403).json({ message: "Not authorized to view this server" });
         }
 
@@ -117,7 +117,7 @@ const joinServer = async (req, res) => {
         }
 
         // Check if user is already a member
-        if (server.members.includes(req.user._id)) {
+        if (server.members.some(m => m.toString() === req.user._id.toString())) {
             return res.status(200).json({ message: "Already a member", server });
         }
 
