@@ -18,13 +18,13 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 const ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    // ✅ Vercel frontend URL:
-    process.env.FRONTEND_URL || "https://dfdfdf-psi.vercel.app",
-];
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
 
+  // ✅ Your real Vercel frontend
+  "https://opentlclient.vercel.app",
+];
 const io = new Server(server, {
     cors: {
         origin: (origin, callback) => {
