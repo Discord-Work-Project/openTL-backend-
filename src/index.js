@@ -21,9 +21,9 @@ const ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
-    // ✅ Add your Vercel frontend URL below:
-    process.env.FRONTEND_URL || "https://discode-frontend.vercel.app",
-];
+    "https://dfdfdf-psi.vercel.app",
+    process.env.FRONTEND_URL,
+].filter(Boolean);
 
 const io = new Server(server, {
     cors: {
