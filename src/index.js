@@ -87,8 +87,8 @@ io.on("connection", (socket) => {
     });
 
     socket.on("send-message", (message) => {
-        // Broadcast to everyone else in the channel
-        socket.to(message.channelId).emit("new-message", message);
+        // Broadcast to everyone in the channel (including sender)
+        io.to(message.channelId).emit("new-message", message);
     });
 
     socket.on("delete-message", (data) => {
