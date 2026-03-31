@@ -21,13 +21,21 @@ const ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
-    "https://dfdfdf-psi.vercel.app",
-    process.env.FRONTEND_URL,
-].filter(Boolean);
+    // ✅ Vercel frontend URL:
+    process.env.FRONTEND_URL || "https://dfdfdf-psi.vercel.app",
+];
 
 const io = new Server(server, {
     cors: {
-        origin: true, // ⚠️ TEMPORARY: allow all — restrict to Vercel URL when known
+        origin: (origin, callback) => {
+            // Allow requests with no origin (e.g., mobile apps, curl)
+            if (!origin) return callback(null, true);
+            if (ALLOWED_ORIGINS.includes(origin)) {
+                return callback(null, true);
+            }
+            console.warn("⚠️ Blocked CORS origin:", origin);
+            return callback(new Error("Not allowed by CORS"));
+        },
         methods: ["GET", "POST"],
         credentials: true,
     },
@@ -272,7 +280,11 @@ io.on("connection", (socket) => {
 
 // Middleware (Increased limits for base64 avatars and CORS preflight handle)
 app.use(cors({
-    origin: true, // ⚠️ TEMPORARY: allow all origins
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 }));
