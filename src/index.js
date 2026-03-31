@@ -17,11 +17,33 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
+const ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    // ✅ Add your Vercel frontend URL below:
+    process.env.FRONTEND_URL || "https://discode-frontend.vercel.app",
+];
+
 const io = new Server(server, {
     cors: {
-        origin: "*", // Adjust in production
+        origin: (origin, callback) => {
+            // Allow requests with no origin (e.g., mobile apps, curl)
+            if (!origin) return callback(null, true);
+            if (ALLOWED_ORIGINS.includes(origin)) {
+                return callback(null, true);
+            }
+            console.warn("⚠️ Blocked CORS origin:", origin);
+            return callback(new Error("Not allowed by CORS"));
+        },
         methods: ["GET", "POST"],
+        credentials: true,
     },
+    // ✅ Critical for Render: allow polling fallback if WebSocket upgrade fails
+    transports: ["websocket", "polling"],
+    // ✅ Ping settings to keep Render's free tier alive
+    pingTimeout: 60000,
+    pingInterval: 25000,
 });
 
 // Voice Presence & Signaling
@@ -39,8 +61,13 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-    console.log("Joined:", socket.id);
+    console.log("✅ Socket connected:", socket.id, "| transport:", socket.conn.transport.name);
     
+    // Log transport upgrades (polling → websocket)
+    socket.conn.on("upgrade", (transport) => {
+        console.log("⬆️  Transport upgraded to:", transport.name, "for", socket.id);
+    });
+
     // Add to global users
     globalUsers.add(socket.id);
     
@@ -254,7 +281,15 @@ io.on("connection", (socket) => {
 });
 
 // Middleware (Increased limits for base64 avatars and CORS preflight handle)
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(helmet({
